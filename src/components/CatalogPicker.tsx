@@ -75,7 +75,7 @@ export default function CatalogPicker({
           <div className="divide-y divide-line/50">
             {results.slice(0, limit).map((x) => (
               <button key={x.id} onClick={() => setSel(x)} className="flex w-full items-center gap-3 py-2.5 text-left active:opacity-60">
-                <img src={catalogImage(x.id)} alt="" loading="lazy" className="size-12 shrink-0 rounded-xl bg-surface-2 object-cover" />
+                <img src={catalogImage(x.id)} crossOrigin="anonymous" alt="" loading="lazy" className="size-12 shrink-0 rounded-xl bg-surface-2 object-cover" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{x.n}</div>
                   {x.en && x.en !== x.n && <div className="truncate text-xs text-white/40">{x.en}</div>}
@@ -106,7 +106,7 @@ function Detail({ x, onBack, onUse }: { x: CatalogEntry; onBack: () => void; onU
       </button>
       <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-2xl bg-surface-2">
         {Array.from({ length: Math.min(2, x.k) }, (_, i) => (
-          <img key={i} src={catalogImage(x.id, i)} alt="" className="aspect-[3/2] w-full object-cover" />
+          <img key={i} src={catalogImage(x.id, i)} crossOrigin="anonymous" alt="" className="aspect-[3/2] w-full object-cover" />
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5 text-xs">
