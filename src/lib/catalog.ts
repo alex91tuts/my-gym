@@ -1,10 +1,12 @@
-// Catalogul free-exercise-db (domeniu public): 870 de exerciții cu poze (start / final) și instrucțiuni în engleză.
+// Catalogul free-exercise-db (domeniu public): 870 de exerciții cu poze (start / final), traduse în română.
+// Numele original (engleză) rămâne în `en`, ca să poți căuta în ambele limbi.
 // Lista compactă e în public/catalog/exercises.json; pozele vin de pe GitHub și se copiază în cont la import.
 import { CATALOG_EQUIPMENT, CATALOG_GROUP } from './muscles'
 
 export interface CatalogEntry {
   id: string
-  n: string // nume (engleză)
+  n: string // nume (română)
+  en?: string // nume original (engleză)
   e: string | null // echipament
   c: string // categorie
   l: string // nivel
@@ -75,7 +77,7 @@ export function searchCatalog(list: CatalogEntry[], query: string, group: string
   const out = list.filter((x) => {
     if (group && entryGroup(x) !== group) return false
     if (!terms.length) return true
-    const hay = plain([x.n, x.e ?? '', entryGroup(x) ?? '', entryEquipment(x) ?? '', ...x.p].join(' '))
+    const hay = plain([x.n, x.en ?? '', x.e ?? '', entryGroup(x) ?? '', entryEquipment(x) ?? '', ...x.p].join(' '))
     return terms.every((alts) => alts.some((t) => hay.includes(t)))
   })
   // Exercițiile de forță întâi, stretching/cardio la final

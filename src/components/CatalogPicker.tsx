@@ -71,13 +71,14 @@ export default function CatalogPicker({
           </div>
           {err && <p className="py-6 text-center text-danger">{err}</p>}
           {!list && !err && <p className="py-8 text-center text-muted">Se încarcă…</p>}
-          {list && <p className="mb-1 text-xs text-muted">{results.length} exerciții · nume și instrucțiuni în engleză</p>}
+          {list && <p className="mb-1 text-xs text-muted">{results.length} exerciții</p>}
           <div className="divide-y divide-line/50">
             {results.slice(0, limit).map((x) => (
               <button key={x.id} onClick={() => setSel(x)} className="flex w-full items-center gap-3 py-2.5 text-left active:opacity-60">
                 <img src={catalogImage(x.id)} alt="" loading="lazy" className="size-12 shrink-0 rounded-xl bg-surface-2 object-cover" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{x.n}</div>
+                  {x.en && x.en !== x.n && <div className="truncate text-xs text-white/40">{x.en}</div>}
                   <div className="truncate text-sm text-muted">{[entryGroup(x), entryEquipment(x)].filter(Boolean).join(' · ') || '—'}</div>
                 </div>
               </button>
@@ -88,7 +89,7 @@ export default function CatalogPicker({
               Arată mai multe
             </Button>
           )}
-          {list && results.length === 0 && <p className="py-6 text-center text-muted">Nimic găsit. Încearcă în engleză.</p>}
+          {list && results.length === 0 && <p className="py-6 text-center text-muted">Nimic găsit. Încearcă alt cuvânt (merge și în engleză).</p>}
         </>
       )}
     </Sheet>
