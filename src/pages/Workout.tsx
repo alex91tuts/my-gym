@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronDown, CloudOff, CloudUpload, MoreHorizontal, Plus, Sparkles, Trash2, Trophy } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, ChevronDown, CloudOff, CloudUpload, MoreHorizontal, Plus, Sparkles, Trash2, Trophy } from 'lucide-react'
 import { useNow, useStore } from '../lib/store'
 import { fmtDuration, fmtMinutes, fmtWeight, parseNum, relativeDay } from '../lib/format'
 import { load, save } from '../lib/storage'
@@ -75,6 +75,19 @@ export default function WorkoutPage() {
 
   const updateEx = (key: string, fn: (e: ActiveExercise) => ActiveExercise) =>
     setActive((w) => (w ? { ...w, exercises: w.exercises.map((e) => (e.key === key ? fn(e) : e)) } : w))
+
+  const moveEx = (key: string, dir: -1 | 1) =>
+    setActive((w) => {
+      if (!w) return w
+      const list = [...w.exercises]
+      const i = list.findIndex((e) => e.key === key)
+      const j = i + dir
+      if (i < 0 || j < 0 || j >= list.length) return w
+      ;[list[i], list[j]] = [list[j], list[i]]
+      return { ...w, exercises: list }
+    })
+
+  const menuIdx = active.exercises.findIndex((e) => e.key === menuFor)
 
   const updateSet = (key: string, idx: number, patch: Partial<ActiveSet>) =>
     updateEx(key, (e) => {
@@ -284,8 +297,16 @@ export default function WorkoutPage() {
         }}
       />
 
-      <Sheet open={Boolean(menuFor)} onClose={() => setMenuFor(null)} title="Exercițiu">
+      <Sheet open={Boolean(menuFor)} onClose={() => setMenuFor(null)} title={active.exercises[menuIdx]?.name ?? 'Exercițiu'}>
         <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" disabled={menuIdx <= 0} onClick={() => moveEx(menuFor!, -1)}>
+              <ArrowUp size={18} /> Mai sus
+            </Button>
+            <Button variant="secondary" disabled={menuIdx < 0 || menuIdx >= active.exercises.length - 1} onClick={() => moveEx(menuFor!, 1)}>
+              <ArrowDown size={18} /> Mai jos
+            </Button>
+          </div>
           <Button
             variant="secondary"
             className="w-full justify-start"
