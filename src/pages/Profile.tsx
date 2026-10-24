@@ -3,6 +3,7 @@ import { Check, Copy, Database, LogOut, RefreshCw, Sparkles } from 'lucide-react
 import { supabase, supabaseConfigured } from '../lib/supabase'
 import { useStore } from '../lib/store'
 import { Button, Card, PageHeader } from '../components/ui'
+import ImportCard from '../components/ImportCard'
 
 export default function Profile({ email }: { email: string | null }) {
   const { refresh, syncing, error, pendingCount } = useStore()
@@ -33,6 +34,8 @@ export default function Profile({ email }: { email: string | null }) {
             <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} /> Sincronizează acum
           </Button>
         </Card>
+
+        <ImportCard always />
 
         <Card className="border-ai/30">
           <div className="mb-2 flex items-center gap-2 font-bold text-ai">

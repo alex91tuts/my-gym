@@ -4,6 +4,7 @@ import { ChevronRight, ClipboardList, Plus, Zap } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { Button, Card, Empty, IconButton, Input, PageHeader, Sheet } from '../components/ui'
 import CoachCard from '../components/CoachCard'
+import ImportCard from '../components/ImportCard'
 
 function greeting() {
   const h = new Date().getHours()
@@ -40,6 +41,7 @@ export default function Home() {
         }
       />
       <div className="space-y-4 px-4">
+        <ImportCard />
         {unseen && <CoachCard note={unseen} compact />}
 
         <div className="flex items-center justify-between px-1 pt-2">
