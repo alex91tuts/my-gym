@@ -1,4 +1,5 @@
 import { backend } from './backend'
+import { SEED_MEDIA } from './seedMedia'
 
 const GROUPS = ['Piept', 'Spate', 'Umeri', 'Biceps', 'Triceps', 'Cvadriceps', 'Femurali', 'Fesieri', 'Gambe', 'Abdomen']
 const EQUIPMENT = ['Bară', 'Gantere', 'Aparat', 'Cablu', 'Greutate corporală', 'Kettlebell', 'Bară EZ', 'Smith']
@@ -42,7 +43,7 @@ async function doSeed() {
   const e = Object.fromEntries(equip.map((x) => [x.name, x.id]))
   await backend.insert(
     'exercises',
-    EXERCISES.map(([name, group, eq]) => ({ name, muscle_group_id: g[group] ?? null, equipment_id: e[eq] ?? null })),
+    EXERCISES.map(([name, group, eq]) => ({ name, muscle_group_id: g[group] ?? null, equipment_id: e[eq] ?? null, ...SEED_MEDIA[name] })),
   )
   return true
 }

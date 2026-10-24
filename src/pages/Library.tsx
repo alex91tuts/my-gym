@@ -4,7 +4,8 @@ import { ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useLookups, useStore } from '../lib/store'
 import { Button, Chip, Confirm, IconButton, Input, PageHeader, Sheet, cx } from '../components/ui'
 import ExerciseForm from '../components/ExerciseForm'
-import { ImageField, InfoButton, TextArea, Thumb, hasMedia } from '../components/Media'
+import { ImageField, InfoButton, TextArea, Thumb, groupSection, hasMedia } from '../components/Media'
+import { groupMuscles } from '../lib/muscles'
 import { commitImage, removeImage, type ImageDraft } from '../lib/media'
 import type { NamedData } from '../lib/store'
 import type { Equipment } from '../lib/types'
@@ -140,14 +141,7 @@ function NamedList({ kind, adding, setAdding }: { kind: 'groups' | 'equipment'; 
           const count = store.exercises.filter((e) => e[field] === it.id).length
           return (
             <div key={it.id} className="flex items-center gap-3 py-2.5">
-              {hasMedia(it) && (
-                <InfoButton
-                  title={it.name}
-                  thumb={it.image_url}
-                  sections={[{ label: label, title: it.name, description: it.description, image_url: it.image_url }]}
-                  size="sm"
-                />
-              )}
+              <NamedInfo item={it} kind={kind} />
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{it.name}</div>
                 <div className="text-sm text-muted">{count} exerciții</div>
@@ -231,5 +225,25 @@ function NamedForm({
         {busy ? 'Se salvează…' : 'Salvează'}
       </Button>
     </div>
+  )
+}
+
+// Miniatura de info: poza, sau (la grupe) schema corpului dedusă din nume. Locul rămâne rezervat ca rândurile să fie aliniate.
+function NamedInfo({ item, kind }: { item: Equipment; kind: 'groups' | 'equipment' }) {
+  const section =
+    kind === 'groups'
+      ? groupSection(item)
+      : hasMedia(item)
+        ? { label: 'Echipament', title: item.name, description: item.description, image_url: item.image_url }
+        : null
+  if (!section) return kind === 'groups' ? <div className="size-9 shrink-0" /> : null
+  return (
+    <InfoButton
+      title={item.name}
+      thumb={item.image_url}
+      thumbMuscles={kind === 'groups' ? groupMuscles(item.name) : undefined}
+      sections={[section]}
+      size="sm"
+    />
   )
 }

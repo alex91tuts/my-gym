@@ -28,10 +28,27 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
-        // Pozele exercițiilor/aparatelor din Supabase Storage: păstrate pe telefon, merg și fără net
+        // jpg: pozele exercițiilor de start (public/catalog/img), disponibile offline din prima
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
         runtimeCaching: [
           {
+            // Lista catalogului: se încarcă doar când cauți în catalog
+            urlPattern: /\/catalog\/exercises\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'catalog' },
+          },
+          {
+            // Pozele din catalog (GitHub), văzute la căutare
+            urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'catalog-img',
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            // Pozele urcate de voi în Supabase Storage: păstrate pe telefon, merg și fără net
             urlPattern: /\/storage\/v1\/object\/public\/media\//,
             handler: 'CacheFirst',
             options: {

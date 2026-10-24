@@ -230,6 +230,8 @@ export function StoreProvider({ userId, children }: { userId: string; children: 
       notes: ex.notes ?? null,
       description: ex.description ?? null,
       image_url: ex.image_url ?? null,
+      primary_muscles: ex.primary_muscles?.length ? ex.primary_muscles : null,
+      secondary_muscles: ex.secondary_muscles?.length ? ex.secondary_muscles : null,
     }
     const row = ex.id ? await backend.update<Exercise>('exercises', ex.id, data) : (await backend.insert<Exercise>('exercises', [data]))[0]
     patchLib((l) => ({ ...l, exercises: [...l.exercises.filter((x) => x.id !== row.id), row].sort(byName) }))

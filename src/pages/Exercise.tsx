@@ -60,10 +60,11 @@ export default function ExercisePage() {
         }
       />
       <div className="space-y-3 px-4">
-        {(ex.image_url || ex.description?.trim()) && (
-          <Card className="flex gap-3" onClick={() => setZoom(true)}>
-            {ex.image_url && <img src={ex.image_url} alt={ex.name} className="size-24 shrink-0 rounded-2xl bg-surface-2 object-cover" />}
-            {ex.description?.trim() && <p className="line-clamp-5 text-sm whitespace-pre-line text-white/80">{ex.description}</p>}
+        {(ex.image_url || ex.description?.trim() || ex.primary_muscles?.length) && (
+          <Card className="space-y-3" onClick={() => setZoom(true)}>
+            {ex.image_url && <img src={ex.image_url} alt={ex.name} className="max-h-48 w-full rounded-2xl bg-surface-2 object-contain" />}
+            {ex.description?.trim() && <p className="line-clamp-3 text-sm whitespace-pre-line text-white/80">{ex.description}</p>}
+            <div className="text-xs font-semibold text-accent">Vezi tot și mușchii lucrați ›</div>
           </Card>
         )}
         {ex.notes && <Card className="text-sm text-white/80">{ex.notes}</Card>}
