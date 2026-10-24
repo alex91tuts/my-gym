@@ -3,19 +3,42 @@ import { createPortal } from 'react-dom'
 import { Camera, Info, Trash2 } from 'lucide-react'
 import { useLookups } from '../lib/store'
 import type { ImageDraft } from '../lib/media'
-import type { Media } from '../lib/types'
+import { groupMuscles, type Muscle } from '../lib/muscles'
+import type { Exercise, Media, MuscleGroup } from '../lib/types'
+import BodyMap, { BodyThumb } from './BodyMap'
 import { Button, Sheet, cx } from './ui'
 
 export const hasMedia = (m?: Media | null) => Boolean(m && (m.image_url || m.description?.trim()))
 
 // Miniatură pătrată, rotunjită
 export function Thumb({ url, className }: { url: string; className?: string }) {
-  return <img src={url} alt="" loading="lazy" className={cx('shrink-0 rounded-xl bg-surface-2 object-cover', className ?? 'size-10')} />
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      className={cx('shrink-0 rounded-xl bg-surface-2 object-cover object-left', className ?? 'size-10')}
+    />
+  )
 }
 
 export interface InfoSection extends Media {
   label: string
   title: string
+  primary?: Muscle[]
+  secondary?: Muscle[]
+}
+
+const exerciseMuscles = (ex: Exercise) => ({
+  primary: (ex.primary_muscles ?? []) as Muscle[],
+  secondary: (ex.secondary_muscles ?? []) as Muscle[],
+})
+
+// Secțiunea de info pentru o grupă: poza/descrierea ei, plus schema corpului dedusă din nume
+export function groupSection(g: MuscleGroup): InfoSection | null {
+  const primary = groupMuscles(g.name)
+  if (!hasMedia(g) && !primary.length) return null
+  return { label: 'Grupă musculară', title: g.name, description: g.description, image_url: g.image_url, primary }
 }
 
 // Secțiunile de info pentru un exercițiu: exercițiul, apoi aparatul și grupa musculară (dacă au poză/descriere)
@@ -26,10 +49,14 @@ export function useExerciseInfo(exerciseId: string | null | undefined) {
     if (!ex) return { sections: [] as InfoSection[], thumb: null as string | null, title: '' }
     const eq = ex.equipment_id ? equip[ex.equipment_id] : undefined
     const gr = ex.muscle_group_id ? group[ex.muscle_group_id] : undefined
+    const own = exerciseMuscles(ex)
     const sections: InfoSection[] = []
-    if (hasMedia(ex)) sections.push({ label: 'Exercițiu', title: ex.name, description: ex.description, image_url: ex.image_url })
+    if (hasMedia(ex) || own.primary.length)
+      sections.push({ label: 'Exercițiu', title: ex.name, description: ex.description, image_url: ex.image_url, ...own })
     if (hasMedia(eq)) sections.push({ label: 'Echipament', title: eq!.name, description: eq!.description, image_url: eq!.image_url })
-    if (hasMedia(gr)) sections.push({ label: 'Grupă musculară', title: gr!.name, description: gr!.description, image_url: gr!.image_url })
+    const gs = gr && groupSection(gr)
+    // Schema grupei apare doar dacă exercițiul nu are deja schema lui
+    if (gs && (hasMedia(gr) || !own.primary.length)) sections.push(own.primary.length ? { ...gs, primary: undefined } : gs)
     return { sections, thumb: ex.image_url || eq?.image_url || null, title: ex.name }
   }, [exerciseId, exercise, group, equip])
 }
@@ -62,6 +89,7 @@ export function InfoSheet({
                   <img src={s.image_url} alt={s.title} className="max-h-[50vh] w-full object-contain" />
                 </button>
               )}
+              {s.primary && s.primary.length > 0 && <BodyMap primary={s.primary} secondary={s.secondary} className="mb-3" />}
               {s.description?.trim() && <p className="text-[15px] leading-relaxed whitespace-pre-line text-white/85">{s.description}</p>}
             </section>
           ))}
@@ -84,11 +112,13 @@ export function InfoButton({
   title,
   sections,
   thumb,
+  thumbMuscles,
   size = 'md',
 }: {
   title: string
   sections: InfoSection[]
   thumb?: string | null
+  thumbMuscles?: Muscle[]
   size?: 'sm' | 'md'
 }) {
   const [open, setOpen] = useState(false)
@@ -105,6 +135,8 @@ export function InfoButton({
               <Info size={12} />
             </span>
           </>
+        ) : thumbMuscles?.length ? (
+          <BodyThumb primary={thumbMuscles} className={box} />
         ) : (
           <span className={cx('grid place-items-center rounded-xl text-muted active:bg-white/10', box)}>
             <Info size={size === 'sm' ? 18 : 20} />

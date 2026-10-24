@@ -20,6 +20,9 @@ export interface Exercise extends Media {
   muscle_group_id: string | null
   equipment_id: string | null
   notes: string | null
+  // Pentru schema corpului (vocabularul react-body-highlighter)
+  primary_muscles?: string[] | null
+  secondary_muscles?: string[] | null
 }
 
 export interface Program {

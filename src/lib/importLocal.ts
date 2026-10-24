@@ -46,7 +46,7 @@ export async function importLocalData(): Promise<{ programs: number; workouts: n
   const groups = await mergeByName('muscle_groups', local('muscle_groups'), (r) => pick(r, ['name', 'description', 'image_url']))
   const equip = await mergeByName('equipment', local('equipment'), (r) => pick(r, ['name', 'description', 'image_url']))
   const exercises = await mergeByName('exercises', local('exercises'), (r) => ({
-    ...pick(r, ['name', 'notes', 'description', 'image_url']),
+    ...pick(r, ['name', 'notes', 'description', 'image_url', 'primary_muscles', 'secondary_muscles']),
     muscle_group_id: r.muscle_group_id ? (groups[r.muscle_group_id] ?? null) : null,
     equipment_id: r.equipment_id ? (equip[r.equipment_id] ?? null) : null,
   }))
