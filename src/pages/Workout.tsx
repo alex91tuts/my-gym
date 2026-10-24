@@ -7,6 +7,7 @@ import { load, save } from '../lib/storage'
 import type { ActiveExercise, ActiveSet } from '../lib/types'
 import { Button, Confirm, IconButton, Sheet, cx } from '../components/ui'
 import ExercisePicker from '../components/ExercisePicker'
+import { ExerciseInfoButton } from '../components/Media'
 import RestTimer, { primeAudio, type RestState } from '../components/RestTimer'
 
 const REST_KEY = 'rest-timer'
@@ -162,6 +163,7 @@ export default function WorkoutPage() {
                     </p>
                   )}
                 </div>
+                <ExerciseInfoButton exerciseId={ex.exerciseId} size="sm" />
                 <IconButton onClick={() => setMenuFor(ex.key)} aria-label="Opțiuni">
                   <MoreHorizontal size={20} />
                 </IconButton>

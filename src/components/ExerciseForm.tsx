@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useStore } from '../lib/store'
 import type { Exercise } from '../lib/types'
+import { commitImage, removeImage, type ImageDraft } from '../lib/media'
 import { Button, Input, Select, Sheet } from './ui'
+import { ImageField, TextArea } from './Media'
 
 export default function ExerciseForm({
   open,
@@ -23,6 +25,8 @@ export default function ExerciseForm({
   const [groupId, setGroupId] = useState('')
   const [equipId, setEquipId] = useState('')
   const [notes, setNotes] = useState('')
+  const [description, setDescription] = useState('')
+  const [image, setImage] = useState<ImageDraft>({ url: null })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
@@ -32,6 +36,8 @@ export default function ExerciseForm({
     setGroupId(exercise?.muscle_group_id ?? initialGroup ?? '')
     setEquipId(exercise?.equipment_id ?? '')
     setNotes(exercise?.notes ?? '')
+    setDescription(exercise?.description ?? '')
+    setImage({ url: exercise?.image_url ?? null })
     setErr(null)
   }, [open, exercise, initialName, initialGroup])
 
@@ -39,13 +45,17 @@ export default function ExerciseForm({
     if (!name.trim()) return
     setBusy(true)
     try {
+      const image_url = await commitImage(image)
       const ex = await saveExercise({
         id: exercise?.id,
         name,
         muscle_group_id: groupId || null,
         equipment_id: equipId || null,
         notes: notes.trim() || null,
+        description: description.trim() || null,
+        image_url,
       })
+      if (exercise?.image_url && exercise.image_url !== image_url) removeImage(exercise.image_url)
       onSaved?.(ex)
       onClose()
     } catch (e) {
@@ -74,9 +84,16 @@ export default function ExerciseForm({
           placeholder="Fără"
         />
         <Input label="Notițe (opțional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="ex. priză îngustă, banca la 30°" />
+        <TextArea
+          label="Descriere (opțional)"
+          value={description}
+          onChange={setDescription}
+          placeholder="Cum se execută: poziție, mișcare, ce să simți…"
+        />
+        <ImageField value={image} onChange={setImage} />
         {err && <p className="text-sm text-danger">{err}</p>}
         <Button className="w-full" onClick={submit} disabled={!name.trim() || busy}>
-          Salvează
+          {busy ? 'Se salvează…' : 'Salvează'}
         </Button>
       </div>
     </Sheet>

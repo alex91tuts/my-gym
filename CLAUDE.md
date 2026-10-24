@@ -5,6 +5,7 @@ PWA pentru urmărirea antrenamentelor la sală. React 19 + Vite + TypeScript + T
 - `src/lib/store.tsx`: toată starea aplicației (bibliotecă, programe, antrenamentul activ, coada de upload).
 - `src/lib/backend.ts`: Supabase sau mod local (localStorage), dacă lipsesc variabilele `VITE_SUPABASE_*`.
 - `supabase/migrations/`: schema bazei de date.
+- `src/lib/media.ts` + `src/components/Media.tsx`: poze și descrieri pentru exerciții, echipamente, grupe (bucket Storage `media`), afișate doar prin butonul de info.
 - `docs/COACH.md`: **cum analizează Claude antrenamentele și ajustează programele.** Citește-l când ți se cere analiza.
 
 Comenzi: `npm run dev`, `npm run build`, `npm run typecheck`.
