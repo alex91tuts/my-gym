@@ -90,8 +90,9 @@ export async function combinedImage(x: CatalogEntry): Promise<Blob> {
   const urls = Array.from({ length: Math.min(2, Math.max(1, x.k)) }, (_, i) => catalogImage(x.id, i))
   const bmps = await Promise.all(
     urls.map(async (u) => {
-      const r = await fetch(u)
-      if (!r.ok) throw new Error('Poza nu s-a putut descărca')
+      // URL separat de cel din <img>: pe telefoanele cu cache vechi, acolo stă o copie „opacă”, pe care fetch nu o poate citi
+      const r = await fetch(`${u}?cors=1`, { mode: 'cors' }).catch(() => null)
+      if (!r?.ok) throw new Error('Poza din catalog nu s-a putut descărca. Verifică netul și încearcă din nou.')
       return createImageBitmap(await r.blob())
     }),
   )

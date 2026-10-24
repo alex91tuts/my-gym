@@ -41,10 +41,11 @@ export default defineConfig({
             // Pozele din catalog (GitHub), văzute la căutare
             urlPattern: /^https:\/\/raw\.githubusercontent\.com\/yuhonas\/free-exercise-db\//,
             handler: 'CacheFirst',
+            // Doar răspunsuri CORS (200), nu opace (0): altfel importul pozei din catalog dă „Failed to fetch”
             options: {
-              cacheName: 'catalog-img',
+              cacheName: 'catalog-img-v2',
               expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 90 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
           {
