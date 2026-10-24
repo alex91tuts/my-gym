@@ -3,6 +3,7 @@ import { Check, Plus, Search } from 'lucide-react'
 import { useLookups, useStore } from '../lib/store'
 import { Button, Chip, Sheet, cx } from './ui'
 import ExerciseForm from './ExerciseForm'
+import { ExerciseInfoButton } from './Media'
 
 export default function ExercisePicker({
   open,
@@ -52,23 +53,26 @@ export default function ExercisePicker({
           {list.map((e) => {
             const used = exclude.includes(e.id)
             return (
-              <button
-                key={e.id}
-                onClick={() => {
-                  onPick(e.id)
-                  onClose()
-                }}
-                className="flex w-full items-center gap-3 py-3 text-left active:opacity-60"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className={cx('font-semibold', used && 'text-muted')}>{e.name}</div>
-                  <div className="text-sm text-muted">
-                    {[e.muscle_group_id && group[e.muscle_group_id]?.name, e.equipment_id && equip[e.equipment_id]?.name].filter(Boolean).join(' · ') ||
-                      '—'}
+              <div key={e.id} className="flex items-center gap-3">
+                <ExerciseInfoButton exerciseId={e.id} size="sm" />
+                <button
+                  onClick={() => {
+                    onPick(e.id)
+                    onClose()
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left active:opacity-60"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className={cx('font-semibold', used && 'text-muted')}>{e.name}</div>
+                    <div className="text-sm text-muted">
+                      {[e.muscle_group_id && group[e.muscle_group_id]?.name, e.equipment_id && equip[e.equipment_id]?.name]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </div>
                   </div>
-                </div>
-                {used ? <Check size={18} className="text-muted" /> : <Plus size={20} className="text-accent" />}
-              </button>
+                  {used ? <Check size={18} className="text-muted" /> : <Plus size={20} className="text-accent" />}
+                </button>
+              </div>
             )
           })}
           {list.length === 0 && <p className="py-6 text-center text-muted">Nimic găsit.</p>}

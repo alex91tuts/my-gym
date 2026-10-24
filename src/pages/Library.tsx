@@ -4,6 +4,10 @@ import { ChevronRight, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useLookups, useStore } from '../lib/store'
 import { Button, Chip, Confirm, IconButton, Input, PageHeader, Sheet, cx } from '../components/ui'
 import ExerciseForm from '../components/ExerciseForm'
+import { ImageField, InfoButton, TextArea, Thumb, hasMedia } from '../components/Media'
+import { commitImage, removeImage, type ImageDraft } from '../lib/media'
+import type { NamedData } from '../lib/store'
+import type { Equipment } from '../lib/types'
 
 type Tab = 'exercises' | 'groups' | 'equipment'
 
@@ -95,6 +99,7 @@ function Exercises({ adding, setAdding }: { adding: boolean; setAdding: (v: bool
       <div className="divide-y divide-line/50 rounded-3xl bg-surface px-4">
         {list.map((e) => (
           <button key={e.id} onClick={() => nav(`/exercise/${e.id}`)} className="flex w-full items-center gap-3 py-3.5 text-left active:opacity-60">
+            {e.image_url && <Thumb url={e.image_url} />}
             <div className="min-w-0 flex-1">
               <div className="font-semibold">{e.name}</div>
               <div className="text-sm text-muted">
@@ -116,13 +121,13 @@ function NamedList({ kind, adding, setAdding }: { kind: 'groups' | 'equipment'; 
   const items = kind === 'groups' ? store.muscleGroups : store.equipment
   const field = kind === 'groups' ? 'muscle_group_id' : 'equipment_id'
   const add = kind === 'groups' ? store.addMuscleGroup : store.addEquipment
-  const rename = kind === 'groups' ? store.renameMuscleGroup : store.renameEquipment
+  const update = kind === 'groups' ? store.updateMuscleGroup : store.updateEquipment
   const del = kind === 'groups' ? store.deleteMuscleGroup : store.deleteEquipment
-  const [editing, setEditing] = useState<{ id: string | null; name: string } | null>(null)
+  const [editing, setEditing] = useState<Equipment | null>(null)
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null)
   const label = kind === 'groups' ? 'grupă musculară' : 'echipament'
 
-  const open = editing ?? (adding ? { id: null, name: '' } : null)
+  const open: (Partial<Equipment> & { name: string }) | null = editing ?? (adding ? { name: '' } : null)
   const close = () => {
     setEditing(null)
     setAdding(false)
@@ -134,12 +139,20 @@ function NamedList({ kind, adding, setAdding }: { kind: 'groups' | 'equipment'; 
         {items.map((it) => {
           const count = store.exercises.filter((e) => e[field] === it.id).length
           return (
-            <div key={it.id} className="flex items-center gap-2 py-2.5">
+            <div key={it.id} className="flex items-center gap-3 py-2.5">
+              {hasMedia(it) && (
+                <InfoButton
+                  title={it.name}
+                  thumb={it.image_url}
+                  sections={[{ label: label, title: it.name, description: it.description, image_url: it.image_url }]}
+                  size="sm"
+                />
+              )}
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{it.name}</div>
                 <div className="text-sm text-muted">{count} exerciții</div>
               </div>
-              <IconButton onClick={() => setEditing({ id: it.id, name: it.name })} aria-label="Redenumește">
+              <IconButton onClick={() => setEditing(it)} aria-label="Editează">
                 <Pencil size={18} />
               </IconButton>
               <IconButton onClick={() => setDeleting(it)} aria-label="Șterge" className="text-danger/80">
@@ -153,8 +166,18 @@ function NamedList({ kind, adding, setAdding }: { kind: 'groups' | 'equipment'; 
         <Plus size={18} /> Adaugă {label}
       </Button>
 
-      <Sheet open={Boolean(open)} onClose={close} title={open?.id ? `Redenumește ${label}` : `Adaugă ${label}`}>
-        {open && <NameForm initial={open.name} onSave={async (name) => (open.id ? await rename(open.id, name) : await add(name), close())} />}
+      <Sheet open={Boolean(open)} onClose={close} title={open?.id ? `Editează ${label}` : `Adaugă ${label}`}>
+        {open && (
+          <NamedForm
+            initial={open}
+            kind={kind}
+            onSave={async (data) => {
+              if (open.id) await update(open.id, data)
+              else await add(data)
+              close()
+            }}
+          />
+        )}
       </Sheet>
       <Confirm
         open={Boolean(deleting)}
@@ -167,13 +190,45 @@ function NamedList({ kind, adding, setAdding }: { kind: 'groups' | 'equipment'; 
   )
 }
 
-function NameForm({ initial, onSave }: { initial: string; onSave: (name: string) => void }) {
-  const [name, setName] = useState(initial)
+function NamedForm({
+  initial,
+  kind,
+  onSave,
+}: {
+  initial: Partial<Equipment> & { name: string }
+  kind: 'groups' | 'equipment'
+  onSave: (data: NamedData) => Promise<void>
+}) {
+  const [name, setName] = useState(initial.name)
+  const [description, setDescription] = useState(initial.description ?? '')
+  const [image, setImage] = useState<ImageDraft>({ url: initial.image_url ?? null })
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const submit = async () => {
+    if (!name.trim() || busy) return
+    setBusy(true)
+    try {
+      const image_url = await commitImage(image)
+      await onSave({ name: name.trim(), description: description.trim() || null, image_url })
+      if (initial.image_url && initial.image_url !== image_url) removeImage(initial.image_url)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Eroare')
+      setBusy(false)
+    }
+  }
   return (
     <div className="space-y-4">
-      <Input label="Nume" value={name} onChange={(e) => setName(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name.trim())} />
-      <Button className="w-full" disabled={!name.trim()} onClick={() => onSave(name.trim())}>
-        Salvează
+      <Input label="Nume" value={name} onChange={(e) => setName(e.target.value)} autoFocus={!initial.id} />
+      <TextArea
+        label="Descriere (opțional)"
+        value={description}
+        onChange={setDescription}
+        placeholder={kind === 'equipment' ? 'Cum arată, unde e în sală, cum se reglează…' : 'Ce mușchi cuprinde, unde se află…'}
+      />
+      <ImageField value={image} onChange={setImage} />
+      {err && <p className="text-sm text-danger">{err}</p>}
+      <Button className="w-full" disabled={!name.trim() || busy} onClick={submit}>
+        {busy ? 'Se salvează…' : 'Salvează'}
       </Button>
     </div>
   )

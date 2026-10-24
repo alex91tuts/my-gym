@@ -6,6 +6,7 @@ import type { WorkoutSet } from '../lib/types'
 import { est1RM, fmtDate, fmtWeight } from '../lib/format'
 import { Card, Confirm, IconButton, PageHeader, cx } from '../components/ui'
 import ExerciseForm from '../components/ExerciseForm'
+import { InfoButton, InfoSheet, useExerciseInfo } from '../components/Media'
 
 type Hist = { date: string; sets: WorkoutSet[] }[]
 type Metric = 'weight' | 'e1rm' | 'volume'
@@ -20,6 +21,10 @@ export default function ExercisePage() {
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [metric, setMetric] = useState<Metric>('weight')
+  const [zoom, setZoom] = useState(false)
+  const info = useExerciseInfo(id)
+  // Exercițiul își arată poza/descrierea direct pe pagină; butonul de info rămâne pentru aparat și grupă
+  const otherInfo = info.sections.filter((s) => s.label !== 'Exercițiu')
 
   useEffect(() => {
     if (id) loadExerciseHistory(id).then(setHist).catch(() => setHist([]))
@@ -43,7 +48,8 @@ export default function ExercisePage() {
         subtitle={[ex.muscle_group_id && group[ex.muscle_group_id]?.name, ex.equipment_id && equip[ex.equipment_id]?.name].filter(Boolean).join(' · ')}
         back
         right={
-          <div className="flex">
+          <div className="flex items-center">
+            <InfoButton title={ex.name} sections={otherInfo} size="sm" />
             <IconButton onClick={() => setEditing(true)} aria-label="Editează">
               <Pencil size={20} />
             </IconButton>
@@ -54,6 +60,12 @@ export default function ExercisePage() {
         }
       />
       <div className="space-y-3 px-4">
+        {(ex.image_url || ex.description?.trim()) && (
+          <Card className="flex gap-3" onClick={() => setZoom(true)}>
+            {ex.image_url && <img src={ex.image_url} alt={ex.name} className="size-24 shrink-0 rounded-2xl bg-surface-2 object-cover" />}
+            {ex.description?.trim() && <p className="line-clamp-5 text-sm whitespace-pre-line text-white/80">{ex.description}</p>}
+          </Card>
+        )}
         {ex.notes && <Card className="text-sm text-white/80">{ex.notes}</Card>}
         <div className="grid grid-cols-3 gap-2 text-center">
           {[
@@ -109,6 +121,7 @@ export default function ExercisePage() {
         ))}
       </div>
 
+      <InfoSheet open={zoom} onClose={() => setZoom(false)} title={ex.name} sections={info.sections} />
       <ExerciseForm open={editing} onClose={() => setEditing(false)} exercise={ex} />
       <Confirm
         open={deleting}

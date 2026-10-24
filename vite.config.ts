@@ -29,6 +29,18 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Pozele exercițiilor/aparatelor din Supabase Storage: păstrate pe telefon, merg și fără net
+        runtimeCaching: [
+          {
+            urlPattern: /\/storage\/v1\/object\/public\/media\//,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'media',
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

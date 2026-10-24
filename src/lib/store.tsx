@@ -14,6 +14,7 @@ import type {
   WorkoutWithSets,
 } from './types'
 import { parseNum } from './format'
+import { removeImage } from './media'
 
 interface Library {
   muscleGroups: MuscleGroup[]
@@ -37,11 +38,11 @@ interface Store extends Library {
   error: string | null
   refresh: () => Promise<void>
   // CRUD generic pe bibliotecă
-  addMuscleGroup: (name: string) => Promise<MuscleGroup>
-  renameMuscleGroup: (id: string, name: string) => Promise<void>
+  addMuscleGroup: (data: NamedData) => Promise<MuscleGroup>
+  updateMuscleGroup: (id: string, patch: Partial<NamedData>) => Promise<void>
   deleteMuscleGroup: (id: string) => Promise<void>
-  addEquipment: (name: string) => Promise<Equipment>
-  renameEquipment: (id: string, name: string) => Promise<void>
+  addEquipment: (data: NamedData) => Promise<Equipment>
+  updateEquipment: (id: string, patch: Partial<NamedData>) => Promise<void>
   deleteEquipment: (id: string) => Promise<void>
   saveExercise: (ex: Partial<Exercise> & { name: string }) => Promise<Exercise>
   deleteExercise: (id: string) => Promise<void>
@@ -61,6 +62,12 @@ interface Store extends Library {
   lastPerf: Record<string, LastPerf>
   loadHistory: (limit?: number) => Promise<WorkoutWithSets[]>
   loadExerciseHistory: (exerciseId: string) => Promise<{ date: string; sets: WorkoutSet[] }[]>
+}
+
+export interface NamedData {
+  name: string
+  description?: string | null
+  image_url?: string | null
 }
 
 const Ctx = createContext<Store | null>(null)
@@ -195,17 +202,18 @@ export function StoreProvider({ userId, children }: { userId: string; children: 
   const patchLib = (fn: (l: Library) => Library) => setLib((l) => fn(l))
 
   // ---- Grupe musculare / echipamente
-  const addNamed = async <T extends { id: string; name: string }>(table: string, key: 'muscleGroups' | 'equipment', name: string) => {
-    const [row] = await backend.insert<T>(table, [{ name }])
+  const addNamed = async <T extends { id: string; name: string }>(table: string, key: 'muscleGroups' | 'equipment', data: NamedData) => {
+    const [row] = await backend.insert<T>(table, [data])
     patchLib((l) => ({ ...l, [key]: [...(l[key] as T[]), row].sort(byName) }))
     return row
   }
-  const renameNamed = async (table: string, key: 'muscleGroups' | 'equipment', id: string, name: string) => {
-    await backend.update(table, id, { name })
-    patchLib((l) => ({ ...l, [key]: l[key].map((x) => (x.id === id ? { ...x, name } : x)).sort(byName) }))
+  const updateNamed = async (table: string, key: 'muscleGroups' | 'equipment', id: string, patch: Partial<NamedData>) => {
+    await backend.update(table, id, patch)
+    patchLib((l) => ({ ...l, [key]: l[key].map((x) => (x.id === id ? { ...x, ...patch } : x)).sort(byName) }))
   }
   const deleteNamed = async (table: string, key: 'muscleGroups' | 'equipment', field: 'muscle_group_id' | 'equipment_id', id: string) => {
     await backend.remove(table, id)
+    removeImage(lib[key].find((x) => x.id === id)?.image_url)
     patchLib((l) => ({
       ...l,
       [key]: l[key].filter((x) => x.id !== id),
@@ -220,6 +228,8 @@ export function StoreProvider({ userId, children }: { userId: string; children: 
       muscle_group_id: ex.muscle_group_id ?? null,
       equipment_id: ex.equipment_id ?? null,
       notes: ex.notes ?? null,
+      description: ex.description ?? null,
+      image_url: ex.image_url ?? null,
     }
     const row = ex.id ? await backend.update<Exercise>('exercises', ex.id, data) : (await backend.insert<Exercise>('exercises', [data]))[0]
     patchLib((l) => ({ ...l, exercises: [...l.exercises.filter((x) => x.id !== row.id), row].sort(byName) }))
@@ -228,6 +238,7 @@ export function StoreProvider({ userId, children }: { userId: string; children: 
   const deleteExercise = async (id: string) => {
     await backend.removeWhere('program_exercises', 'exercise_id', id)
     await backend.remove('exercises', id)
+    removeImage(lib.exercises.find((x) => x.id === id)?.image_url)
     patchLib((l) => ({
       ...l,
       exercises: l.exercises.filter((x) => x.id !== id),
@@ -430,11 +441,11 @@ export function StoreProvider({ userId, children }: { userId: string; children: 
     syncing,
     error,
     refresh,
-    addMuscleGroup: (n) => addNamed<MuscleGroup>('muscle_groups', 'muscleGroups', n),
-    renameMuscleGroup: (id, n) => renameNamed('muscle_groups', 'muscleGroups', id, n),
+    addMuscleGroup: (d) => addNamed<MuscleGroup>('muscle_groups', 'muscleGroups', d),
+    updateMuscleGroup: (id, p) => updateNamed('muscle_groups', 'muscleGroups', id, p),
     deleteMuscleGroup: (id) => deleteNamed('muscle_groups', 'muscleGroups', 'muscle_group_id', id),
-    addEquipment: (n) => addNamed<Equipment>('equipment', 'equipment', n),
-    renameEquipment: (id, n) => renameNamed('equipment', 'equipment', id, n),
+    addEquipment: (d) => addNamed<Equipment>('equipment', 'equipment', d),
+    updateEquipment: (id, p) => updateNamed('equipment', 'equipment', id, p),
     deleteEquipment: (id) => deleteNamed('equipment', 'equipment', 'equipment_id', id),
     saveExercise,
     deleteExercise,

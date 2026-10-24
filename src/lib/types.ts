@@ -1,14 +1,20 @@
-export interface MuscleGroup {
+// Poză + descriere opționale, afișate doar la cerere (butonul de info)
+export interface Media {
+  description?: string | null
+  image_url?: string | null
+}
+
+export interface MuscleGroup extends Media {
   id: string
   name: string
 }
 
-export interface Equipment {
+export interface Equipment extends Media {
   id: string
   name: string
 }
 
-export interface Exercise {
+export interface Exercise extends Media {
   id: string
   name: string
   muscle_group_id: string | null

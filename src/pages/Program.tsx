@@ -6,6 +6,7 @@ import { fmtWeight } from '../lib/format'
 import { Button, Card, Confirm, Empty, IconButton, Input, PageHeader, Sheet, Stepper } from '../components/ui'
 import ExercisePicker from '../components/ExercisePicker'
 import CoachCard from '../components/CoachCard'
+import { ExerciseInfoButton } from '../components/Media'
 import type { ProgramExercise } from '../lib/types'
 
 export default function ProgramPage() {
@@ -102,6 +103,7 @@ export default function ProgramPage() {
                     </p>
                   )}
                 </div>
+                <ExerciseInfoButton exerciseId={pe.exercise_id} />
               </div>
             </Card>
           )
